@@ -1,0 +1,16 @@
+policies:
+  - name: azure-storage-https-not-enforced
+    resource: azure.storage
+    description: Storage account accepts plain HTTP. NIST SC-8.
+    filters:
+      - type: value
+        key: properties.supportsHttpsTrafficOnly
+        value: false
+
+  - name: azure-disk-not-encrypted-with-platform-or-cmk
+    resource: azure.disk
+    description: Managed disk without an encryption type recorded. NIST SC-28.
+    filters:
+      - type: value
+        key: properties.encryption.type
+        value: absent

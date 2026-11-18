@@ -1,0 +1,8 @@
+policies:
+  - name: gcp-user-managed-service-account-keys
+    resource: gcp.service-account-key
+    description: User-managed (long-lived) service account keys. NIST IA-5.
+    filters:
+      - type: value
+        key: keyType
+        value: USER_MANAGED

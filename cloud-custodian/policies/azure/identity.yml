@@ -1,0 +1,9 @@
+policies:
+  - name: azure-owner-role-assignments
+    resource: azure.roleassignment
+    description: Review every Owner role assignment (Entra/RBAC least privilege). NIST AC-6.
+    filters:
+      - type: role
+        key: properties.roleName
+        op: eq
+        value: Owner

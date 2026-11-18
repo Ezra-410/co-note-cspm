@@ -1,0 +1,106 @@
+# =============================================================================
+# Scheduled CSPM scans from GitHub Actions (cloud-side, runs even when the
+# laptop is off). Read-only AWS access through OIDC: no AWS keys are stored
+# in GitHub. Role trust is limited to this repo's main branch.
+#   every 15 min : public exposure checks  -> metric PublicExposure
+#   daily 02:00  : Prowler assessment      -> CriticalFindings/HighFindings
+# Reports are kept as workflow artifacts (90 days) = historical evidence.
+# Repo variable required: AWS_CSPM_ROLE_ARN (terraform output github_scan_role_arn)
+# =============================================================================
+name: CSPM scheduled scans
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      scan:
+        description: Which scan to run
+        type: choice
+        options: [exposure, prowler]
+        default: exposure
+
+permissions:
+  contents: read
+  id-token: write   # OIDC token for AWS, nothing else
+
+concurrency:
+  group: cspm-${{ github.event.schedule || inputs.scan }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: eu-west-1
+  CSPM_ENV_CREDS: "1"
+  PROJECT_DIR: ${{ github.workspace }}
+
+jobs:
+  exposure:
+    if: github.event.schedule == '*/15 * * * *' || inputs.scan == 'exposure'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_CSPM_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: cspm-exposure-${{ github.run_id }}
+      - name: Install Cloud Custodian (pinned)
+        run: |
+          python -m venv cloud-custodian/custodian-env
+          cloud-custodian/custodian-env/bin/pip install -q -r requirements-custodian.txt
+      - name: Public exposure checks
+        run: scripts/exposure-check.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: exposure-${{ github.run_id }}
+          path: |
+            reports/exposure/
+            data/exposure_history.csv
+          retention-days: 30
+
+  prowler:
+    if: github.event.schedule == '0 2 * * *' || inputs.scan == 'prowler'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_CSPM_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: cspm-prowler-${{ github.run_id }}
+          role-duration-seconds: 3600
+      - name: Install Prowler (pinned)
+        run: |
+          python -m venv prowler-env
+          prowler-env/bin/pip install -q -r requirements-prowler.txt
+      - name: Prowler assessment
+        run: scripts/prowler-scan.sh
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Prowler assessment"
+            tail -n 1 data/scan_history.csv 2>/dev/null || echo "no result"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: prowler-${{ github.run_id }}
+          path: |
+            reports/prowler/
+            data/
+          retention-days: 90

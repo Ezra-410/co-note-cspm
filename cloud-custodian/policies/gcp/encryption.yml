@@ -1,0 +1,8 @@
+policies:
+  - name: gcp-disk-without-cmek
+    resource: gcp.disk
+    description: Persistent disk using Google-managed keys only (CMEK policy check). NIST SC-12/SC-28.
+    filters:
+      - type: value
+        key: diskEncryptionKey.kmsKeyName
+        value: absent

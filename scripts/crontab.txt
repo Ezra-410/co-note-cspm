@@ -1,0 +1,15 @@
+# Co-note CSPM schedule (Milestone 6) - install with:  crontab scripts/crontab.txt
+# Times are the laptop's local time. WSL: run `sudo service cron start` first.
+# Proposed lab frequencies (not universal enterprise requirements):
+PROJECT_DIR=__HOME__/co-note-cspm
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# Critical exposure checks - every 15 minutes
+*/15 * * * * __HOME__/co-note-cspm/scripts/exposure-check.sh >> __HOME__/co-note-cspm/logs/exposure-cron.log 2>&1
+# Cloud Custodian policy checks - every hour
+0 * * * *    __HOME__/co-note-cspm/scripts/custodian-scan.sh >> __HOME__/co-note-cspm/logs/custodian-cron.log 2>&1
+# Prowler security assessment - daily at 02:00
+0 2 * * *    __HOME__/co-note-cspm/scripts/prowler-scan.sh >> __HOME__/co-note-cspm/logs/prowler-cron.log 2>&1
+# Compliance assessment (CIS 5.0 + NIST 800-53 r5) - weekly, Sunday 03:00
+0 3 * * 0    __HOME__/co-note-cspm/scripts/compliance-scan.sh >> __HOME__/co-note-cspm/logs/compliance-cron.log 2>&1
+# Full security posture review - monthly: human activity (docs/RUNBOOK-REVIEW.md), no cron job

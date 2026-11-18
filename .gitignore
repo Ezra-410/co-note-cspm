@@ -1,0 +1,16 @@
+# Terraform state and plans (contain account details)
+terraform/.terraform/
+terraform/*.tfstate*
+terraform/*.tfplan
+terraform/terraform.tfvars
+# Local tool environments
+prowler-env/
+cloud-custodian/custodian-env/
+*.venv/
+# Scan output: account ids, resource ids -> keep out of a public repo
+reports/
+output/
+data/
+logs/
+dashboard/.powerpipe/
+dashboard/mod.pp.bak

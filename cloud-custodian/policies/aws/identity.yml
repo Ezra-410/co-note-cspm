@@ -1,0 +1,46 @@
+# AWS - identity and audit logging (common requirement: "least privilege + audit trail")
+policies:
+  - name: aws-iam-user-without-mfa
+    resource: aws.iam-user
+    description: IAM user with no MFA device. NIST IA-2(1), CIS 1.10.
+    filters:
+      - type: mfa-device
+        value: empty
+
+  - name: aws-iam-user-old-access-keys
+    resource: aws.iam-user
+    description: Active access key older than 90 days. NIST IA-5(1), CIS 1.14.
+    filters:
+      - type: access-key
+        key: Status
+        value: Active
+      - type: access-key
+        match-operator: and
+        key: CreateDate
+        value_type: age
+        value: 90
+        op: greater-than
+
+  - name: aws-iam-user-with-admin-policy
+    resource: aws.iam-user
+    description: Users with AdministratorAccess attached directly (review list). NIST AC-6.
+    filters:
+      - type: policy
+        key: PolicyName
+        value: AdministratorAccess
+
+  - name: aws-account-cloudtrail-not-multiregion
+    resource: aws.account
+    description: No multi-region CloudTrail trail with log validation. NIST AU-2/AU-12, CIS 3.1.
+    filters:
+      - type: check-cloudtrail
+        multi-region: true
+        file-digest: true
+        global-events: true
+        running: true
+
+  - name: aws-resources-missing-owner-tag
+    resource: aws.ec2
+    description: Governance - every resource needs an Owner tag. NIST CM-8.
+    filters:
+      - "tag:Owner": absent

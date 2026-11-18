@@ -1,0 +1,34 @@
+# =============================================================================
+# CONTROLLED REMEDIATION - removes ONLY the matched 0.0.0.0/0 (and ::/0) SSH
+# rules. Other rules of the group stay untouched.
+#
+# Before a real run (see docs/RUNBOOK-REMEDIATION.md):
+#   1. dry-run and list the affected groups
+#   2. check no legitimate workflow depends on them (Co-note admin = SSM)
+#   3. approved alternative access: SSM Session Manager (no inbound port)
+#   4. infrastructure owner approval recorded in registers/remediation-log.csv
+#   5. run with the MFA-protected profile conote-remediator
+#
+# Scope guard: only Project=co-note resources (also enforced by IAM).
+# =============================================================================
+policies:
+  - name: remediate-public-ssh-access
+    resource: aws.security-group
+    description: >
+      Remove SSH ingress rules that allow access from the public internet.
+    filters:
+      - "tag:Project": co-note
+      - or:
+          - type: ingress
+            IpProtocol: tcp
+            Ports: [22]
+            Cidr:
+              value: "0.0.0.0/0"
+          - type: ingress
+            IpProtocol: tcp
+            Ports: [22]
+            CidrV6:
+              value: "::/0"
+    actions:
+      - type: remove-permissions
+        ingress: matched

@@ -1,0 +1,3 @@
+exception_id,finding_or_check,resource,reason,compensating_control,approved_by,expires
+EXC-L01,s3_account_level_public_access_block,account,"Account-level S3 Block Public Access left OFF so the drift exercise can produce a real exposure; every bucket has its own block",Bucket-level block on all buckets + Custodian 15-min check + EventBridge alert,Ezra-410 (lab owner),2026-12-31
+EXC-L02,sns_topics_kms_encryption_at_rest_enabled,CoNote-CSPM-Alerts,"EventBridge/CloudWatch cannot publish to a topic encrypted with the AWS-managed key; alerts contain no secrets",TLS-only topic policy; publish restricted to this account,Ezra-410 (lab owner),2026-12-31

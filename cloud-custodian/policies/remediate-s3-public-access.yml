@@ -1,0 +1,41 @@
+# =============================================================================
+# CONTROLLED REMEDIATION - S3 public exposure (final challenge, scenario A)
+#   1. turn all four public access block settings back ON
+#   2. remove bucket-policy statements that grant access to Principal "*"
+#      (the public access block does NOT delete an existing public policy)
+# Same approval process as remediate-public-ssh.yml. Run with conote-remediator.
+# Restricted to buckets named conote-* (also enforced by IAM).
+# =============================================================================
+policies:
+  - name: remediate-s3-public-access-block
+    resource: aws.s3
+    description: Re-enable all four S3 public access block settings.
+    filters:
+      - type: value
+        key: Name
+        op: glob
+        value: "conote-*"
+      # no parameters = match if ANY of the 4 settings is false or missing
+      # (missing configuration and AccessDenied are both treated as "off":
+      #  a bucket we cannot inspect is never reported as compliant)
+      - type: check-public-block
+    actions:
+      - type: set-public-block
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
+  - name: remediate-s3-public-policy-statements
+    resource: aws.s3
+    description: Remove bucket-policy statements that allow Principal "*".
+    filters:
+      - type: value
+        key: Name
+        op: glob
+        value: "conote-*"
+      - type: has-statement
+        statement_ids: [PublicShareDrift]
+    actions:
+      - type: set-statements
+        remove: [PublicShareDrift]

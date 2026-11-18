@@ -1,0 +1,3 @@
+c7n==0.9.53
+c7n-azure
+c7n-gcp

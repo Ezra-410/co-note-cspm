@@ -1,0 +1,63 @@
+# =============================================================================
+# Co-note security baseline - DETECTION ONLY (no actions, never modifies AWS)
+# Run hourly (scripts/custodian-scan.sh) and every 15 min for the exposure
+# subset (scripts/exposure-check.sh). Each policy writes resources.json under
+# output/<policy-name>/ ; the count of matched resources = number of violations.
+# =============================================================================
+policies:
+
+  # ---- Lab policy 1: public SSH ------------------------------------------
+  - name: detect-public-ssh-access
+    resource: aws.security-group
+    description: >
+      Identify security groups allowing SSH access from the public internet.
+      NIST SP 800-53 SC-7 / AC-17 - CIS AWS 5.2/5.3
+    filters:
+      - or:
+          - type: ingress
+            IpProtocol: tcp
+            Ports: [22]
+            Cidr:
+              value: "0.0.0.0/0"
+          - type: ingress
+            IpProtocol: tcp
+            Ports: [22]
+            CidrV6:
+              value: "::/0"
+
+  # ---- Lab policy 2: S3 public access block incomplete -------------------
+  - name: detect-public-s3-access-block-disabled
+    resource: aws.s3
+    description: >
+      Identify S3 buckets without all four public access blocking controls
+      enabled. NIST SP 800-53 AC-3 / AC-21 - CIS AWS 2.1.4
+    filters:
+      # no parameters = match if ANY of the 4 settings is false or missing
+      # (missing configuration and AccessDenied are both treated as "off":
+      #  a bucket we cannot inspect is never reported as compliant)
+      - type: check-public-block
+
+  # ---- extra: other administrative ports open to the world ---------------
+  - name: detect-public-admin-ports
+    resource: aws.security-group
+    description: >
+      RDP 3389, databases 3306/5432 and Docker API 2375/2376 must never be
+      reachable from 0.0.0.0/0. NIST SP 800-53 SC-7
+    filters:
+      - type: ingress
+        IpProtocol: tcp
+        Ports: [3389, 3306, 5432, 2375, 2376]
+        Cidr:
+          value: "0.0.0.0/0"
+
+  # ---- extra: bucket policy that grants access to everyone ---------------
+  - name: detect-s3-public-policy
+    resource: aws.s3
+    description: >
+      Bucket policy with Principal "*" granting access (real public exposure,
+      different from an incomplete public access block). NIST AC-3
+    filters:
+      - type: has-statement
+        statements:
+          - Effect: Allow
+            Principal: "*"

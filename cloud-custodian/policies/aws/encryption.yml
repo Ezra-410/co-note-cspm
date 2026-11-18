@@ -1,0 +1,23 @@
+# AWS - encryption at rest (common requirement: "encrypt stored data")
+policies:
+  - name: aws-s3-no-default-encryption
+    resource: aws.s3
+    description: Bucket without default server-side encryption. NIST SC-28.
+    filters:
+      - type: bucket-encryption
+        state: false
+
+  - name: aws-ebs-unencrypted
+    resource: aws.ebs
+    description: Unencrypted EBS volume. NIST SC-28, CIS 2.2.1.
+    filters:
+      - Encrypted: false
+
+  - name: aws-s3-versioning-disabled
+    resource: aws.s3
+    description: Versioning off = no recovery from deletion/ransomware. NIST CP-9.
+    filters:
+      - type: value
+        key: Versioning.Status
+        value: Enabled
+        op: ne

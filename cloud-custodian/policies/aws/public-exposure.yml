@@ -1,0 +1,43 @@
+# AWS - public exposure (common requirement: "no unintended public access")
+policies:
+  - name: aws-sg-admin-ports-open-to-internet
+    resource: aws.security-group
+    description: SSH/RDP/DB/Docker ports reachable from 0.0.0.0/0. NIST SC-7.
+    filters:
+      - type: ingress
+        IpProtocol: tcp
+        Ports: [22, 3389, 3306, 5432, 2375, 2376]
+        Cidr:
+          value: "0.0.0.0/0"
+
+  - name: aws-s3-public-access-block-incomplete
+    resource: aws.s3
+    description: Any of the 4 public access block settings off or missing. NIST AC-3.
+    filters:
+      - type: check-public-block
+
+  - name: aws-ec2-public-ip-not-tagged-public
+    resource: aws.ec2
+    description: >
+      Instance has a public IP but is not declared as intentionally public
+      (tag Exposure=public-intended missing). NIST SC-7, CM-8.
+    filters:
+      - type: value
+        key: PublicIpAddress
+        value: present
+      - "tag:Exposure": absent
+
+  - name: aws-default-sg-has-rules
+    resource: aws.security-group
+    description: The default security group must not allow traffic (CIS 5.4).
+    filters:
+      - GroupName: default
+      - or:
+          - type: value
+            key: length(IpPermissions)
+            op: gt
+            value: 0
+          - type: value
+            key: length(IpPermissionsEgress)
+            op: gt
+            value: 0

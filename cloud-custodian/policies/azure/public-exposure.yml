@@ -1,0 +1,19 @@
+# Azure - same requirement, Azure resource model (NSG instead of security group)
+policies:
+  - name: azure-nsg-ssh-rdp-open-to-internet
+    resource: azure.networksecuritygroup
+    description: NSG allows 22/3389 inbound from any source. NIST SC-7.
+    filters:
+      - type: ingress
+        ports: "22,3389"
+        match: any
+        access: Allow
+        source: "*"
+
+  - name: azure-storage-public-blob-access
+    resource: azure.storage
+    description: Storage account allows public (anonymous) blob access. NIST AC-3.
+    filters:
+      - type: value
+        key: properties.allowBlobPublicAccess
+        value: true

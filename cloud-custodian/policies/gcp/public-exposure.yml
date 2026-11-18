@@ -1,0 +1,24 @@
+# GCP - same requirement, GCP resource model (firewall rules, uniform bucket access)
+policies:
+  - name: gcp-firewall-open-to-internet
+    resource: gcp.firewall
+    description: Enabled ingress firewall rule open to 0.0.0.0/0 (review its ports). NIST SC-7.
+    filters:
+      - type: value
+        key: sourceRanges
+        value: "0.0.0.0/0"
+        op: contains
+      - type: value
+        key: direction
+        value: INGRESS
+      - type: value
+        key: disabled
+        value: false
+
+  - name: gcp-bucket-without-uniform-access
+    resource: gcp.bucket
+    description: Bucket still uses object ACLs (uniform bucket-level access off). NIST AC-3.
+    filters:
+      - type: value
+        key: iamConfiguration.uniformBucketLevelAccess.enabled
+        value: false
