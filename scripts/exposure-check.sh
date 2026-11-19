@@ -9,7 +9,7 @@ OUT="$REPORTS/exposure/$NOW"
 mkdir -p "$OUT"
 source "$CUSTODIAN_ENV/bin/activate"
 
-custodian run -s "$OUT" --region "$REGION" \
+custodian run --cache-period 0 -s "$OUT" --region "$REGION" \
   "$PROJECT_DIR/cloud-custodian/policies/security-baseline.yml" >/dev/null 2>&1 || {
   echo "custodian run failed - see $OUT/*/custodian-run.log"; exit 1; }
 

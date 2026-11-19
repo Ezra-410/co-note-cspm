@@ -1,1 +1,2 @@
 change_id,finding_id,date_utc,action,tool,run_by,approved_by,dry_run_evidence,result,verification
+CHG-001,F-SSH-01,2026-11-19T08:35:38Z,"Remove 22/tcp from 0.0.0.0/0 on sg-09824c64adf8aaacb (rule sgr-07a1f04de2b9ccbed, drift injected 08:28:24Z)",cloud-custodian remediate-public-ssh-access,conote-cspm-remediator (MFA; 1st attempt 08:34:48Z rejected - invalid MFA code),Ezra (infrastructure owner),output/03-remediate-dryrun (count 1),success,"before-sg.json: 22/tcp 0.0.0.0/0; after-sg.json: []; detection 1 -> 0 (with --cache-period 0); CloudTrail RevokeSecurityGroupIngress"

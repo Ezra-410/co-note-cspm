@@ -9,7 +9,7 @@ OUTPUT_DIR="$REPORTS/custodian/$NOW"
 mkdir -p "$OUTPUT_DIR"
 source "$CUSTODIAN_ENV/bin/activate"
 
-custodian run -s "$OUTPUT_DIR" -m aws --region "$REGION" \
+custodian run --cache-period 0 -s "$OUTPUT_DIR" -m aws --region "$REGION" \
   "$PROJECT_DIR/cloud-custodian/policies/security-baseline.yml" \
   "$PROJECT_DIR"/cloud-custodian/policies/aws/*.yml
 
