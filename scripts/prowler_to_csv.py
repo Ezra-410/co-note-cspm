@@ -83,7 +83,9 @@ def main() -> None:
             "resource_name": res.get("name", ""),
             "region": res.get("region", ""),
             "account_id": ((f.get("cloud") or {}).get("account") or {}).get("uid", ""),
-            "cis": pick(comp, "CIS-"),
+            # Pin CIS to 5.0 (same version as the Powerpipe benchmark cis_v500)
+            # so both tools are compared on the same benchmark; newest otherwise.
+            "cis": pick(comp, "CIS-5.0") or pick(comp, "CIS-"),
             "nist_800_53": pick(comp, "NIST-800-53-REVISION-5") or pick(comp, "NIST-800-53"),
             "frameworks": "|".join(sorted(comp)),
             "remediation": ((f.get("remediation") or {}).get("desc") or "").replace("\n", " ")[:300],
