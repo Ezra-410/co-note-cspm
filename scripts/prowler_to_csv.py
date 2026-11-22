@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Normalise a Prowler OCSF JSON report for the CSPM dashboard and metrics.
 
-Usage:  prowler_to_csv.py <prowler-output-dir> <data-dir>
+Usage:  prowler_to_csv.py <prowler-output-dir> <data-dir> [full|compliance]
 
 Writes (comma-separated, header row, readable by the Steampipe CSV plugin):
   <data-dir>/prowler_findings.csv   one row per finding of the LATEST scan
@@ -19,6 +19,7 @@ import csv
 import glob
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 
@@ -30,7 +31,11 @@ FIELDS = [
 
 
 def latest_ocsf(path: str) -> str:
-    files = sorted(glob.glob(os.path.join(path, "**", "*.ocsf.json"), recursive=True),
+    # Main report only: prowler-output-<account>-<timestamp>.ocsf.json in the
+    # report folder itself. The compliance/ sub-folder also holds *.ocsf.json
+    # files (one per framework) - they must NOT be used as the main result.
+    files = sorted((f for f in glob.glob(os.path.join(path, "prowler-output-*.ocsf.json"))
+                    if re.fullmatch(r"prowler-output-\d+-\d+\.ocsf\.json", os.path.basename(f))),
                    key=os.path.getmtime)
     if not files:
         sys.exit(f"no *.ocsf.json found under {path}")
@@ -47,12 +52,19 @@ def pick(compliance: dict, prefix: str) -> str:
 
 def main() -> None:
     src_dir, data_dir = sys.argv[1], sys.argv[2]
+    # "full" scans feed the dashboard; "compliance" scans (subset of checks)
+    # are written to their own file so they never overwrite the full picture.
+    kind = sys.argv[3] if len(sys.argv) > 3 else "full"
+    findings_file = "prowler_findings.csv" if kind == "full" else "prowler_compliance_findings.csv"
     os.makedirs(data_dir, exist_ok=True)
     src = latest_ocsf(src_dir)
     with open(src, encoding="utf-8") as fh:
         findings = json.load(fh)
 
-    scan_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Real scan time from the report (epoch seconds, UTC); fallback = now.
+    epoch = findings[0].get("time") if findings else None
+    when = datetime.fromtimestamp(epoch, timezone.utc) if epoch else datetime.now(timezone.utc)
+    scan_time = when.strftime("%Y-%m-%dT%H:%M:%SZ")
     rows, counts = [], {"critical": 0, "high": 0, "medium": 0, "low": 0,
                         "informational": 0, "fail": 0, "pass": 0, "manual": 0}
     for f in findings:
@@ -85,7 +97,7 @@ def main() -> None:
         elif status == "MANUAL":
             counts["manual"] += 1
 
-    with open(os.path.join(data_dir, "prowler_findings.csv"), "w", newline="", encoding="utf-8") as out:
+    with open(os.path.join(data_dir, findings_file), "w", newline="", encoding="utf-8") as out:
         w = csv.DictWriter(out, fieldnames=FIELDS)
         w.writeheader()
         w.writerows(rows)
@@ -97,7 +109,7 @@ def main() -> None:
         if new:
             w.writerow(["scan_time", "tool", "critical", "high", "medium", "low",
                         "fail", "pass", "manual", "source_report"])
-        w.writerow([scan_time, "prowler", counts["critical"], counts["high"], counts["medium"],
+        w.writerow([scan_time, "prowler" if kind == "full" else "prowler-compliance", counts["critical"], counts["high"], counts["medium"],
                     counts["low"], counts["fail"], counts["pass"], counts["manual"],
                     os.path.basename(src)])
 

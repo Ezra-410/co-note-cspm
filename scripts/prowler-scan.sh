@@ -28,15 +28,21 @@ if [ "$rc" -ne 0 ] && [ "$rc" -ne 3 ]; then
   exit "$rc"
 fi
 
-summary="$(python3 "$PROJECT_DIR/scripts/prowler_to_csv.py" "$REPORT_DIR" "$DATA_DIR")"
+KIND=full
+case " $* " in *" --compliance "*) KIND=compliance ;; esac
+summary="$(python3 "$PROJECT_DIR/scripts/prowler_to_csv.py" "$REPORT_DIR" "$DATA_DIR" "$KIND")"
 echo "Summary: $summary"
 crit=$(echo "$summary" | jq -r .critical)
 high=$(echo "$summary" | jq -r .high)
 fail=$(echo "$summary" | jq -r .fail)
 
-put_metric CriticalFindings "$crit"
-put_metric HighFindings "$high"
-put_metric FailedChecks "$fail"
+# Severity metrics come from FULL scans only (a compliance run checks a subset
+# and would make the numbers jump down and up).
+if [ "$KIND" = full ]; then
+  put_metric CriticalFindings "$crit"
+  put_metric HighFindings "$high"
+  put_metric FailedChecks "$fail"
+fi
 put_metric ScanCompleted 1
 
 echo "Assessment completed. Critical=$crit High=$high Failed=$fail"

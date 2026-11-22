@@ -30,7 +30,7 @@ dashboard "conote_cspm" {
                case when max(scan_time) is null
                       or max(scan_time)::timestamptz < now() - interval '26 hours'
                     then 'alert' else 'info' end as type
-        from csv.scan_history
+        from csv.scan_history where tool = 'prowler'
       EOQ
     }
     card {
@@ -109,7 +109,7 @@ dashboard "conote_cspm" {
       width = 6
       sql   = <<-EOQ
         select scan_time, critical::int as critical, high::int as high, medium::int as medium
-        from csv.scan_history order by scan_time
+        from csv.scan_history where tool = 'prowler' order by scan_time
       EOQ
     }
     chart {
