@@ -1,8 +1,8 @@
 -- Investigation: JOIN resources together (question 8 - correlation with SQL)
 
--- Which INSTANCES are reachable from the internet, and through WHICH rule?
--- (an instance is only exposed if it has a public IP AND an attached group
---  allows inbound traffic from 0.0.0.0/0)
+-- An instance is only exposed if it has a public IP AND an attached group
+-- allows inbound traffic from 0.0.0.0/0, so the two must be JOINED:
+-- Instances reachable from the internet, and through which rule
 select i.instance_id, i.tags ->> 'Name' as name, i.public_ip_address,
        sg ->> 'GroupId' as group_id, r.ip_protocol, r.from_port, r.to_port
 from aws_ec2_instance i
