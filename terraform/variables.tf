@@ -44,3 +44,9 @@ variable "instance_type" {
   type        = string
   default     = "t3.micro"
 }
+
+variable "github_oidc_sub_prefix" {
+  description = "Immutable OIDC subject prefix of the repo (owner and repo IDs), from: gh api repos/OWNER/REPO/actions/oidc/customization/sub"
+  type        = string
+  default     = "repo:Ezra-410@186315605/co-note-cspm@1462202519"
+}
