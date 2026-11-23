@@ -1,0 +1,27 @@
+[2026-11-23T12:40:11Z] E0 baseline
+CoNote-CSPM-Public-Exposure	OK
+CoNote-Custodian-detect-public-ssh-access	OK
+[2026-11-23T12:40:30Z] E1 inject SSH 0.0.0.0/0
+[2026-11-23T12:42:51Z] E2 exposure check
+[2026-11-23T12:43:26Z] public exposure: ssh=1 s3_block=0 admin_ports=0 s3_policy=0 total=1
+[2026-11-23T12:43:26Z] E3 custodian scan
+  detect-public-ssh-access                      1
+[2026-11-23T12:48:18Z] E4 Public-Exposure alarm = ALARM
+CoNote-CSPM-Public-Exposure	ALARM
+CoNote-Custodian-detect-public-ssh-access	ALARM
+2026-11-23T13:40:53+01:00	Ezra	AuthorizeSecurityGroupIngress
+action:removepermissions resources:1 execution_time:1.43
+[2026-11-23T12:52:56Z] E6 recheck
+[2026-11-23T12:53:30Z] public exposure: ssh=0 s3_block=0 admin_ports=0 s3_policy=0 total=0
+[2026-11-23T13:01:21Z] E7 Public-Exposure alarm = OK
+CoNote-CSPM-Public-Exposure	OK
+CoNote-Custodian-detect-public-ssh-access	ALARM
+CoNote-CSPM-Public-Exposure	OK
+CoNote-Custodian-detect-public-ssh-access	OK
+------------------------------------------------------------------------------------
+|                               DescribeAlarmHistory                               |
++-----------------------------------+----------------------------------------------+
+|  2026-11-23T14:01:19.594000+01:00 |  Alarm updated from ALARM to OK              |
+|  2026-11-23T13:44:19.595000+01:00 |  Alarm updated from OK to ALARM              |
+|  2026-11-18T03:17:19.511000+01:00 |  Alarm updated from INSUFFICIENT_DATA to OK  |
++-----------------------------------+----------------------------------------------+
