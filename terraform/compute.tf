@@ -67,5 +67,11 @@ resource "aws_instance" "app" {
 
   tags = { Name = "conote-app-01", Role = "app", Exposure = "public-intended" }
 
+  # Never replace the server just because AWS published a newer image:
+  # patching is done in place (dnf upgrade via SSM), not by surprise rebuilds.
+  lifecycle {
+    ignore_changes = [ami, user_data]
+  }
+
   depends_on = [aws_ebs_encryption_by_default.on]
 }

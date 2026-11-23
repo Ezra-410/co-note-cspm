@@ -28,7 +28,7 @@ Mutelist:
           Description: "EXC-L04 conote-web-sg 80/443 intended public web (F-09)"
         "ec2_instance_internet_facing_with_instance_profile":
           Regions: ["eu-west-1"]
-          Resources: ["i-0f3269d659872b2ba"]
+          Resources: ["i-0698cc38aeeaa6d1d"]
           Description: "EXC-L05 no ALB in the lab; role = SSM core only (F-10)"
         "sns_topics_kms_encryption_at_rest_enabled":
           Regions: ["eu-west-1"]
