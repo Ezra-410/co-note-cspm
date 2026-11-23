@@ -1,0 +1,10 @@
+[2026-11-23T16:04:20Z] R1 inject SSH
+[2026-11-23T16:05:16Z] R1b RISKY CHANGE email received
+[2026-11-23T16:06:37Z] R2 exposure check
+[2026-11-23T16:07:27Z] public exposure: ssh=1 s3_block=0 admin_ports=0 s3_policy=0 total=1
+[2026-11-23T16:08:29Z] R3 ALARM
+[2026-11-23T16:08:54Z] R1b RISKY CHANGE email received
+[2026-11-23T16:11:20Z] R5 recheck
+[2026-11-23T16:11:57Z] public exposure: ssh=0 s3_block=0 admin_ports=0 s3_policy=0 total=0
+[2026-11-23T16:45:43Z] R6 OK
+[2026-11-23T16:57:03Z] R6b OK email received

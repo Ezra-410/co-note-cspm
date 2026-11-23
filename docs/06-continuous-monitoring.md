@@ -44,16 +44,35 @@ These are lab settings, not universal requirements.
 |---|---|---|
 | Baseline | 12:40:11 | both alarms OK |
 | **Violation**: `Ezra` opens 22/tcp to 0.0.0.0/0 on `conote-admin-sg` | 12:40:30 (CloudTrail `AuthorizeSecurityGroupIngress` 12:40:53) | drift script, CloudTrail |
-| Real-time EventBridge email "RISKY CHANGE…" | 12:41:45 (≈ 52 s after the API call) | email |
+| Real-time EventBridge email "RISKY CHANGE…" | **not delivered**: alert address was still the placeholder `YOUR_EMAIL@example.com` (problem P5) | SNS subscription `PendingConfirmation` |
 | **Detection by scan**: exposure check `ssh=1 total=1`; Custodian `detect-public-ssh-access 1` | 12:43:26 | log, `reports/custodian/…` |
-| **Alarm** `Public-Exposure` OK → ALARM (CloudWatch history) | 12:44:19 | alarm history, ALARM email |
+| **Alarm** `Public-Exposure` OK → ALARM (CloudWatch history) | 12:44:19 | alarm history (email not delivered, P5) |
 | Investigation: CloudTrail shows **who** (`Ezra`) and **when** | 12:5x | log line |
 | **Remediation** CHG-002 (remediator role + MFA): `removepermissions resources:1` | 12:51:53 | `registers/remediation_log.csv` |
 | Recheck: `total=0` | 12:53:30 | log |
-| **Alarm back to OK** (history) | 13:01:19 | alarm history, OK email |
+| **Alarm back to OK** (history) | 13:01:19 | alarm history (email not delivered, P5) |
 | Custodian hourly alarm back to OK | after the next hourly runs (1 h window) | `state` output |
 
-### Measured times
+
+### Notification retest after fixing the address (2026-11-23, UTC)
+
+The first test proved detection and alarms but **no human was told** (P5). After setting the real address, confirming the subscription and a successful `sns publish` delivery test, the test was repeated:
+
+| Step | Time | Evidence |
+|---|---|---|
+| **Violation**: SSH 0.0.0.0/0 on `conote-admin-sg` | 16:04:50 | drift script |
+| **RISKY CHANGE email received** (EventBridge, real time) | 16:05:16 | **26 s** after the change · email screenshot |
+| Exposure check `ssh=1 total=1` | 16:07:27 | `logs/m6-alert-test-2.log` |
+| Alarm `Public-Exposure` = ALARM | 16:08:29 | alarm state |
+| **ALARM email received** | 16:08:54 | (logged as "R1b" by mistake in the log: it is the ALARM email) · screenshot |
+| Remediation CHG-003 (remediator + MFA) | ≈ 16:09–16:11 | `registers/remediation_log.csv` |
+| Recheck `total=0` | 16:11:57 | log |
+| Alarm back to OK (seen by the polling loop) | 16:45:43 | alarm state |
+| **OK email received** | 16:57:03 (time it was noticed) | screenshot |
+
+**Real-time path: 26 seconds from the API call to an email in the inbox.** The scan-based path (15-min check → alarm → email) took about 4 minutes when triggered right away, and can take up to 15 minutes on the normal schedule. This is the clearest demonstration of question 1.
+
+### Measured times (first test)
 
 | Metric | From → to | Duration |
 |---|---|---|
@@ -73,6 +92,8 @@ These are lab settings, not universal requirements.
 | P2 | Alarm would stay red forever on accepted risks | criticals counted whether accepted or not | Prowler mutelist + MUTED status |
 | P3 | Scheduled Custodian checks could report stale data | 15-min API cache (M3) | `--cache-period 0` |
 | P4 | cron stops when WSL closes | laptop-based scheduler | cloud scheduler + Scan-Missing heartbeat |
+| P5 | **Alarms fired but nobody was notified** in the first test | `terraform.tfvars` still had the copy-paste placeholder `YOUR_EMAIL@example.com`; the SNS subscription stayed `PendingConfirmation` | real address, subscription confirmed, `sns publish` delivery test, test repeated (26 s email). Lesson: **test the alert chain end to end, up to a human inbox**, right after setup |
+| P6 | **Server silently replaced** (`i-0f3269d659872b2ba` → `i-0698cc38aeeaa6d1d`, new public IP) during an unrelated `terraform apply` | the AMI comes from "latest Amazon Linux" SSM parameter; a newer image forced replacement, visible only as "1 to destroy" in the plan | `lifecycle { ignore_changes = [ami, user_data] }`; mutelist updated to the new ID; patching in place via SSM. Lesson: **read the whole plan, not the last line** |
 
 ---
 
