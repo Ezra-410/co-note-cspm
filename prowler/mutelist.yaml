@@ -1,0 +1,72 @@
+# =============================================================================
+# Prowler mutelist = ACCEPTED risks only (registers/exceptions.csv).
+# Muted findings are still reported (status "MUTED" in data/prowler_findings.csv)
+# but are excluded from the CriticalFindings/HighFindings alarms -> the alarms
+# only fire for risks nobody has decided on (alert-fatigue control).
+# Every entry must reference an exception with an owner and an expiry date.
+# Review this file whenever an exception expires (all: 2026-12-31).
+# =============================================================================
+Mutelist:
+  Accounts:
+    "093397426920":
+      Checks:
+        "iam_root_hardware_mfa_enabled":
+          Regions: ["*"]
+          Resources: ["*"]
+          Description: "EXC-L03 virtual MFA on root, no root keys, root unused (F-03)"
+        "iam_user_hardware_mfa_enabled":
+          Regions: ["*"]
+          Resources: ["*"]
+          Description: "EXC-L03 virtual MFA; auditor has no console (F-14)"
+        "s3_account_level_public_access_blocks":
+          Regions: ["*"]
+          Resources: ["*"]
+          Description: "EXC-L01 off until the final drift challenge is done (F-05)"
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port":
+          Regions: ["eu-west-1"]
+          Resources: ["sg-00e3f54ad1dd35ad6"]
+          Description: "EXC-L04 conote-web-sg 80/443 intended public web (F-09)"
+        "ec2_instance_internet_facing_with_instance_profile":
+          Regions: ["eu-west-1"]
+          Resources: ["i-0f3269d659872b2ba"]
+          Description: "EXC-L05 no ALB in the lab; role = SSM core only (F-10)"
+        "sns_topics_kms_encryption_at_rest_enabled":
+          Regions: ["eu-west-1"]
+          Resources: ["CoNote-CSPM-Alerts"]
+          Description: "EXC-L02 EventBridge/CloudWatch publishing (F-12)"
+        "s3_bucket_kms_encryption":
+          Regions: ["*"]
+          Resources: ["conote-.*"]
+          Description: "EXC-L06 SSE-S3 sufficient for lab data (F-22)"
+        "s3_bucket_no_mfa_delete":
+          Regions: ["*"]
+          Resources: ["conote-.*"]
+          Description: "EXC-L06 MFA delete requires root (F-22)"
+        "cloudtrail_bucket_requires_mfa_delete":
+          Regions: ["*"]
+          Resources: ["*"]
+          Description: "EXC-L06 MFA delete requires root (F-22)"
+        "s3_bucket_object_lock":
+          Regions: ["*"]
+          Resources: ["conote-.*"]
+          Description: "EXC-L06 object lock only at bucket creation (F-22)"
+        "bedrock_*":
+          Regions: ["*"]
+          Resources: ["*"]
+          Description: "N/A - no AI services used (F-25)"
+        "sagemaker_*":
+          Regions: ["*"]
+          Resources: ["*"]
+          Description: "N/A - no AI services used (F-25)"
+        "organizations_*":
+          Regions: ["*"]
+          Resources: ["*"]
+          Description: "N/A - single Free-plan account, no Organization (F-15)"
+        "vpc_subnet_different_az":
+          Regions: ["*"]
+          Resources: ["*"]
+          Description: "D2 single-AZ lab design (F-24)"
+        "vpc_subnet_separate_private_public":
+          Regions: ["*"]
+          Resources: ["*"]
+          Description: "D2 lab design (F-24)"

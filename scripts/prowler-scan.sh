@@ -20,6 +20,7 @@ set +e
 prowler aws --region "$REGION" \
   --output-formats json-ocsf html csv \
   --output-directory "$REPORT_DIR" \
+  --mutelist-file "$PROJECT_DIR/prowler/mutelist.yaml" \
   --no-banner "$@"
 rc=$?
 set -e

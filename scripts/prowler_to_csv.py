@@ -12,6 +12,7 @@ Statuses are kept as Prowler reports them:
   FAIL   = check ran and the resource violates it
   PASS   = check ran and the resource complies
   MANUAL = check needs a human (cannot be decided automatically)
+  MUTED  = FAIL on an accepted risk (prowler/mutelist.yaml -> exceptions.csv)
 A check that could not run (access denied, service not available) produces NO
 row - so "no finding" never means "compliant" (see docs, CSPM-12).
 """
@@ -66,9 +67,13 @@ def main() -> None:
     when = datetime.fromtimestamp(epoch, timezone.utc) if epoch else datetime.now(timezone.utc)
     scan_time = when.strftime("%Y-%m-%dT%H:%M:%SZ")
     rows, counts = [], {"critical": 0, "high": 0, "medium": 0, "low": 0,
-                        "informational": 0, "fail": 0, "pass": 0, "manual": 0}
+                        "informational": 0, "fail": 0, "pass": 0, "manual": 0, "muted": 0}
     for f in findings:
         status = f.get("status_code", "")
+        # Findings muted by prowler/mutelist.yaml (accepted risks) keep their
+        # row but get status MUTED, so they never trigger the alarms.
+        if f.get("status") == "Suppressed" and status == "FAIL":
+            status = "MUTED"
         sev = (f.get("severity") or "").lower()
         res = (f.get("resources") or [{}])[0]
         comp = (f.get("unmapped") or {}).get("compliance") or {}
@@ -98,6 +103,8 @@ def main() -> None:
             counts["pass"] += 1
         elif status == "MANUAL":
             counts["manual"] += 1
+        elif status == "MUTED":
+            counts["muted"] += 1
 
     with open(os.path.join(data_dir, findings_file), "w", newline="", encoding="utf-8") as out:
         w = csv.DictWriter(out, fieldnames=FIELDS)
