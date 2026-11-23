@@ -44,7 +44,7 @@ These are lab settings, not universal requirements.
 |---|---|---|
 | Baseline | 12:40:11 | both alarms OK |
 | **Violation**: `Ezra` opens 22/tcp to 0.0.0.0/0 on `conote-admin-sg` | 12:40:30 (CloudTrail `AuthorizeSecurityGroupIngress` 12:40:53) | drift script, CloudTrail |
-| Real-time EventBridge email "RISKY CHANGE…" | _(time from mailbox screenshot)_ | email |
+| Real-time EventBridge email "RISKY CHANGE…" | 12:41:45 (≈ 52 s after the API call) | email |
 | **Detection by scan**: exposure check `ssh=1 total=1`; Custodian `detect-public-ssh-access 1` | 12:43:26 | log, `reports/custodian/…` |
 | **Alarm** `Public-Exposure` OK → ALARM (CloudWatch history) | 12:44:19 | alarm history, ALARM email |
 | Investigation: CloudTrail shows **who** (`Ezra`) and **when** | 12:5x | log line |
